@@ -1,5 +1,8 @@
 import React, { useState } from "react";
-import { Box, Heading, FormControl, FormLabel, Input, Select, Button, Radio, RadioGroup, Stack, Table, Thead, Tbody, Tr, Th, Td, TableContainer } from "@chakra-ui/react";
+import { Box, Heading, FormControl, FormLabel, Input, Select, Button, Radio, RadioGroup, Stack, Table, Thead, Tbody, Tr, Th, Td, TableContainer, IconButton, useDisclosure } from "@chakra-ui/react";
+import { FaEdit, FaTrash } from "react-icons/fa";
+import EditTransactionModal from "../components/EditTransactionModal";
+import ConfirmationDialog from "../components/ConfirmationDialog";
 
 const Index = () => {
   const [transactions, setTransactions] = useState([
@@ -50,53 +53,35 @@ const Index = () => {
     });
   };
 
+  const { isOpen: isEditOpen, onOpen: onEditOpen, onClose: onEditClose } = useDisclosure();
+  const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
+
+  const handleEditClick = (transaction) => {
+    setSelectedTransaction(transaction);
+    onEditOpen();
+  };
+
+  const handleDeleteClick = (transaction) => {
+    setSelectedTransaction(transaction);
+    onDeleteOpen();
+  };
+
+  const handleEditTransaction = (updatedTransaction) => {
+    const updatedTransactions = transactions.map((transaction) => (transaction.id === updatedTransaction.id ? updatedTransaction : transaction));
+    setTransactions(updatedTransactions);
+    onEditClose();
+  };
+
+  const handleDeleteTransaction = () => {
+    const updatedTransactions = transactions.filter((transaction) => transaction.id !== selectedTransaction.id);
+    setTransactions(updatedTransactions);
+    onDeleteClose();
+  };
+
   return (
     <Box p={4}>
-      <Heading as="h1" size="xl" mb={8}>
-        Budget App
-      </Heading>
-
-      <Box mb={8}>
-        <Heading as="h2" size="lg" mb={4}>
-          Add Transaction
-        </Heading>
-        <form onSubmit={handleSubmit}>
-          <FormControl mb={4}>
-            <FormLabel>Date</FormLabel>
-            <Input type="date" name="date" value={formData.date} onChange={handleChange} required />
-          </FormControl>
-          <FormControl mb={4}>
-            <FormLabel>Amount</FormLabel>
-            <Input type="number" name="amount" value={formData.amount} onChange={handleChange} required />
-          </FormControl>
-          <FormControl mb={4}>
-            <FormLabel>Type</FormLabel>
-            <RadioGroup name="type" value={formData.type} onChange={(value) => setFormData({ ...formData, type: value })}>
-              <Stack direction="row">
-                <Radio value="income">Income</Radio>
-                <Radio value="expense">Expense</Radio>
-              </Stack>
-            </RadioGroup>
-          </FormControl>
-          <FormControl mb={4}>
-            <FormLabel>Category</FormLabel>
-            <Select name="category" value={formData.category} onChange={handleChange} required>
-              <option value="">Select category</option>
-              <option value="Groceries">Groceries</option>
-              <option value="Bills">Bills</option>
-              <option value="Salary">Salary</option>
-            </Select>
-          </FormControl>
-          <FormControl mb={4}>
-            <FormLabel>Description</FormLabel>
-            <Input type="text" name="description" value={formData.description} onChange={handleChange} required />
-          </FormControl>
-          <Button type="submit" colorScheme="blue">
-            Add Transaction
-          </Button>
-        </form>
-      </Box>
-
+      {}
       <Box>
         <Heading as="h2" size="lg" mb={4}>
           Transactions
@@ -110,6 +95,7 @@ const Index = () => {
                 <Th isNumeric>Amount</Th>
                 <Th>Type</Th>
                 <Th>Category</Th>
+                <Th>Actions</Th>
               </Tr>
             </Thead>
             <Tbody>
@@ -120,12 +106,20 @@ const Index = () => {
                   <Td isNumeric>{transaction.amount}</Td>
                   <Td>{transaction.type}</Td>
                   <Td>{transaction.category}</Td>
+                  <Td>
+                    <IconButton icon={<FaEdit />} aria-label="Edit" onClick={() => handleEditClick(transaction)} mr={2} />
+                    <IconButton icon={<FaTrash />} aria-label="Delete" onClick={() => handleDeleteClick(transaction)} />
+                  </Td>
                 </Tr>
               ))}
             </Tbody>
           </Table>
         </TableContainer>
       </Box>
+
+      <EditTransactionModal isOpen={isEditOpen} onClose={onEditClose} transaction={selectedTransaction} onSave={handleEditTransaction} />
+
+      <ConfirmationDialog isOpen={isDeleteOpen} onClose={onDeleteClose} onConfirm={handleDeleteTransaction} title="Delete Transaction" message="Are you sure you want to delete this transaction?" />
     </Box>
   );
 };
